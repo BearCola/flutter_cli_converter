@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:converter/src/converter.dart';
 import 'package:prompter_sg/prompter_sg.dart';
 
 void main() {
@@ -11,14 +12,25 @@ void main() {
   }
 
   final format = prompter.askMultiple('Select format:', buildFormatOptions());
-//  prompter.askMultiple('Select an image to convert:', buildFileOptions());
-  buildFileOptions();
+  final selectedFile = prompter.askMultiple('Select an image to convert:', buildFileOptions());
+
+  final newPath = convertImage(selectedFile, format);
+
+  final shouldOpen = prompter.askBinary('Open the image?');
+
+  if (shouldOpen) {
+    Process.run('open', [newPath]);
+  }
 }
 
 List<Option> buildFileOptions() {
-  Directory.current.listSync().where((entity) {
-    return FileSystemEntity.isFileSync(entity.path) && entity.path.contains(RegExp(r'\.(png|jpg|jpeg)'));
-  });
+  return Directory.current.listSync().where((entity) {
+    return FileSystemEntity.isFileSync(entity.path) &&
+        entity.path.contains(RegExp(r'\.(png|jpg|jpeg)'));
+  }).map((entity) {
+    final filename = entity.path.split(Platform.pathSeparator).last;
+    return Option(filename, entity);
+  }).toList();
 }
 
 List<Option> buildFormatOptions() {
